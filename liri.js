@@ -52,15 +52,15 @@ client.stream('statuses/filter', {track: 'twitter'},  function(stream) {
 });
 */
 
-require("dotenv").config();
+//require("dotenv").config();
 
 const keys = require("./keys.js");
 
-var spotify = new Spoify(keys.spotify); 
-var client = new Twitter(keys.twitter);
+var spotify = require(keys.spotify); 
+var twitter = require(keys.twitter);
+var request = require('request');
+var file = require('file-system');
 
-var inputString = process.argv;
-var operand = inputString[2];
 
 var getTweets = function() {
 
@@ -87,3 +87,98 @@ var getTweets = function() {
 if (operand === "my-tweets"){
   getTweets();
 }
+
+
+
+//MOVIE INFORMATION 
+
+lookUpMovie: (movie) => {
+
+        var options = {
+            uri: ‘http://www.omdbapi.com/',
+            qs: {
+                apikey: keys.omdb.key, // -> uri + ‘?access_token=xxxxx%20xxxxx’
+                t: movie
+            },
+            headers: {
+                ‘User-Agent’: ‘Request-Promise’
+            },
+            json: true // Automatically parses the JSON string in the response
+        };
+
+        rp(options)
+
+        .then((body) => {
+          console.log(`# Title: ${body.Title}`);
+          console.log(`# Year: ${body.Released}`);
+          console.log(`# IMDB Rating: ${body.Ratings[0].Value}`);
+          console.log(`# Rotten Tomatoes Rating: ${body.Ratings[1].Value}`);
+          console.log(`# Country: ${body.Country}`);
+          console.log(`# Language: ${body.Language}`);
+          console.log(`# Plot: ${body.Plot}`);
+          console.log(`# Cast: ${body.Actors}`);
+        })
+
+        .catch(error => {
+            console.log(‘error:’, error); // Print the error if one occurred
+        });
+    }
+
+    spotify.search({ type: 'track', query: 'All the Small Things', limit: 1 }, function(err, data) {
+  if (err) {
+    return console.log('Error occurred: ' + err);
+  }
+ 
+console.log(JSON.stringify(data, null, 2); 
+});
+
+//================================================================================
+//Spotify 
+
+spotifySong: (song) => {
+
+    song = (song || "The Sign");
+  console.log("Please wait while I find that song.\n");
+  var spotify = new Spotify(keys.spotifyKeys);
+  spotify.search({ type: 'track', query: "track:" + song, limit: 20 })
+  .then(function(response) {
+    var foundSong = false;
+    for (var i = 0; i < response.tracks.items.length; i++) {
+      if (response.tracks.items[i].name.toLowerCase() === song.toLowerCase()) {
+        console.log("I think I found the song you were looking for. Here's some information on it:\n");
+        if (response.tracks.items[i].artists.length > 0) {
+          var artists = response.tracks.items[i].artists.length > 1 ? "  Artists: " : "  Artist: ";
+          for (var j = 0; j < response.tracks.items[i].artists.length; j++) {
+            artists += response.tracks.items[i].artists[j].name;
+            if (j < response.tracks.items[i].artists.length - 1) {
+              artists += ", ";
+            }
+          }
+          console.log(artists);
+        }
+        console.log("  Song: " + response.tracks.items[i].name);
+        console.log("  Album: " + response.tracks.items[i].album.name);
+        console.log(response.tracks.items[i].preview_url ? "  Preview: " + response.tracks.items[i].preview_url : "  No Preview Available");
+
+        foundSong = true;
+        break;
+      }
+    }
+    if (!foundSong) {
+      console.log("I'm Sorry, I couldn't find any songs called '" + song + "' on Spotify.");
+    }
+  })
+  .catch(function(err) {
+      console.log("I'm sorry, but I seem to have run into an error.\n  " + err);
+  });
+};
+
+function parseFileCommand() {
+  fs.readFile("random.txt", "utf8", (error, data)=> {
+    if (error) {
+      return console.log("I'm sorry, but I seem to have run into an error.\n  " + error);
+    }
+    var dataArr = data.split(",");
+    parseCommand(dataArr[0], dataArr[1].replace(/"/g, ""));
+  });
+};
